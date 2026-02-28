@@ -20,5 +20,11 @@ class DatabaseSeeder extends Seeder
         
         // Luego crear usuarios
         $this->call(UserSeeder::class);
+        
+        // Crear categorías
+        $this->call(CategorySeeder::class);
+        
+        // Crear productos
+        $this->call(ProductSeeder::class);
     }
 }
