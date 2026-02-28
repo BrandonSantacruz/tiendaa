@@ -22,6 +22,19 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'company_name',
+        'company_description',
+        'company_logo',
+        'tax_id',
+        'address',
+        'city',
+        'country',
+        'postal_code',
+        'seller_status',
+        'seller_rejection_reason',
+        'seller_approved_at',
+        'commission_rate',
     ];
 
     /**
@@ -104,4 +117,100 @@ class User extends Authenticatable
     {
         return $this->roles()->first();
     }
+
+    /**
+     * RELACIONES MARKETPLACE
+     */
+
+    /**
+     * Productos del vendedor
+     */
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'vendor_id');
+    }
+
+    /**
+     * Comisiones del vendedor
+     */
+    public function commissions()
+    {
+        return $this->hasMany(Commission::class, 'seller_id');
+    }
+
+    /**
+     * Pagos del vendedor
+     */
+    public function payouts()
+    {
+        return $this->hasMany(SellerPayout::class, 'seller_id');
+    }
+
+    /**
+     * MÉTODOS MARKETPLACE
+     */
+
+    /**
+     * Verificar si el usuario es vendedor aprobado
+     */
+    public function isApprovedSeller(): bool
+    {
+        return $this->seller_status === 'approved' && $this->hasRole('vendedor');
+    }
+
+    /**
+     * Verificar si el usuario solicitud pendiente de vendedor
+     */
+    public function isPendingSeller(): bool
+    {
+        return $this->seller_status === 'pending';
+    }
+
+    /**
+     * Verificar si el usuario es vendedor rechazado
+     */
+    public function isRejectedSeller(): bool
+    {
+        return $this->seller_status === 'rejected';
+    }
+
+    /**
+     * Verificar si el usuario es vendedor suspendido
+     */
+    public function isSuspendedSeller(): bool
+    {
+        return $this->seller_status === 'suspended';
+    }
+
+    /**
+     * Obtener comisión pendiente total
+     */
+    public function getPendingCommissionTotal(): float
+    {
+        return $this->commissions()
+            ->where('status', 'pending')
+            ->sum('commission_amount') ?? 0;
+    }
+
+    /**
+     * Obtener ingresos totales del mes
+     */
+    public function getMonthlyEarnings(): float
+    {
+        return $this->commissions()
+            ->whereMonth('sale_date', now()->month)
+            ->whereYear('sale_date', now()->year)
+            ->sum('sale_amount') ?? 0;
+    }
+
+    /**
+     * Obtener comisiones ganadas total
+     */
+    public function getTotalCommissions(): float
+    {
+        return $this->commissions()
+            ->where('status', '!=', 'refunded')
+            ->sum('commission_amount') ?? 0;
+    }
 }
+
